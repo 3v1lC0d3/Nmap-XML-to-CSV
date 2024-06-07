@@ -19,7 +19,34 @@ import argparse
 from collections import Counter
 from time import sleep
 
+def saveallscript(array_script):
+    allscriptid = []
+    alltscriptout = []
+    size1 = len(array_script)
+    #print(size1)
+    for i in range(0,size1,1):
+        #print(str(i))
+        try:
+            script_id = array_script.findall('script')[i].attrib['id']
+        except (IndexError, KeyError):
+                    script_id = ''
+        try:
+            script_output = array_script.findall('script')[i].attrib['output']
+        except (IndexError, KeyError):
+                    script_output = ''
+
+        #print(script_id)
+        #print(script_output)
+        allscriptid.append(script_id)#mio
+        alltscriptout.append(script_output)#mio
+
+    return allscriptid,alltscriptout
+
+        
+
+
 def get_host_data(root):
+    #print(root.text)
     """Traverses the xml tree and build lists of scan information
     and returns a list of lists.
     """
@@ -57,6 +84,7 @@ def get_host_data(root):
         try:
             port_element = host.findall('ports')
             ports = port_element[0].findall('port')
+            #print(ports)
             for port in ports:
                 port_data = []
 
@@ -80,22 +108,35 @@ def get_host_data(root):
                     servicefp = port.findall('service')[0].attrib['servicefp']
                 except (IndexError, KeyError):
                     servicefp = ''
+                """
                 try:
-                    script_id = port.findall('script')[0].attrib['id']
+                    #print(len(port.findall('script')))
+                    saveallscript(port)
+                    for scriptnum in range(0,len(port.findall('script')),1):
+                        script_id = port.findall('script')[scriptnum].attrib['id']
+                        #scriptidfor.append(script_id)#mio
                 except (IndexError, KeyError):
                     script_id = ''
                 try:
                     script_output = port.findall('script')[0].attrib['output']
+                    #print(script_output)
                 except (IndexError, KeyError):
                     script_output = ''
+                """
 
                 # Create a list of the port data
-                port_data.extend((ip_address, host_name, os_name,
+                #print(scriptfor)
+                allscriptid,alltscriptout = saveallscript(port)
+                for i in range(0,len(alltscriptout),1):
+                    host_data.append((ip_address, host_name, os_name,
                                   proto, port_id, service, product, 
-                                  servicefp, script_id, script_output))
+                                  servicefp, allscriptid[i], alltscriptout[i]))
+                    #host_data.append(port_data)
+                #print(host_data[0])
+
                 
                 # Add the port data to the host data
-                host_data.append(port_data)
+                
 
         # If no port information, just create a list of host information
         except IndexError:
@@ -110,6 +151,7 @@ def parse_xml(filename):
     containing the scan data for a host or hosts."""
     try:
         tree = etree.parse(filename)
+        #print(tree)
     except Exception as error:
         print("[-] A an error occurred. The XML may not be well formed. "
               "Please review the error and try again: {}".format(error))
